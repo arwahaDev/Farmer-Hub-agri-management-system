@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 export default function OrdersTable({ onEdit }) {
   const [orders, setOrders] = useState([]);
   const [cropNames, setCropNames] = useState({});

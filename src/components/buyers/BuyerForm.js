@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-
+import { useDispatch } from "react-redux";
+import { saveBuyer } from "../../store/thunks/saveBuyer";
 const emptyForm = {
   name: "",
   cnic: "",
@@ -10,6 +11,7 @@ const emptyForm = {
 };
 
 export default function BuyerForm({ editingBuyer, onCancelEdit }) {
+  const dispatch = useDispatch()
   const [crops, setCrops] = useState([]);
   const [buyers, setBuyers] = useState([]);
   const [form, setForm] = useState(emptyForm);

@@ -1,40 +1,57 @@
-import AlertsPanel from "../components/AlertsPanel";
-import CropHealthChart from "../components/CropHealthChart";
-import CropHealthList from "../components/CropHealthList";
-import HumidityGauge from "../components/HumidityGauge";
-import HarvestSummary from"../components/HarvestSummary";
-import CuttingSchedule from "../components/CuttingSchedule";
+import { useDispatch,useSelector } from "react-redux";
+import { fetchWeather } from "../store/thunks/fetchWeather";
+import AlertsPanel from "../components/dashboard/AlertsPanel";
+import CropHealthChart from "../components/dashboard/CropHealthChart";
+import CropHealthList from "../components/dashboard/CropHealthList";
+import HumidityGauge from "../components/dashboard/HumidityGauge";
+import HarvestSummary from"../components/harvest/HarvestSummary";
+import CuttingSchedule from "../components/dashboard/CuttingSchedule";
 import CropRecommendations from "../components/CropRecommendations";
+import StatCard from "../components/common/StatCard";
+
+import { useAppContext } from "../context/AppContext";
+import { selectProfitByCrop } from "../store/selectors/selectProfitByCrop";
+import { selectLowStock } from "../store/selectors/selectLowStock";
+import { selectDueCrops } from "../store/selectors/selectDueCrops";
 import { useEffect, useState } from "react";
 import {
   getWeather,
   getWeatherDescription,
 } from "../services/weatherService";
-import HarvestChart from "../components/HarvestChart";
-  
+import HarvestChart from "../components/harvest/HarvestChart";
+
+   
 export default function Dashboard() {
-  const [lastUpdated, setLastUpdated]=useState(null);
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
+    const lowStockCrops=useSelector(selectLowStock);
+    const Crops = useSelector((state)=>state.crops||[]);
+    const dueCrops=useSelector(selectDueCrops);
+     const dispatch = useDispatch();
+  const {
+   crops=[],
+   buyers=[],
+   orders =[],
+  }=useAppContext();
+
+     const [refreshing, setRefreshing] = useState(false);
+
+    const weather = useSelector((state) => state.weather.data);
+   const loading = useSelector((state) => state.weather.loading);
+    const error = useSelector((state) => state.weather.error);
+     const lastUpdated = useSelector(
+     (state) => state.weather.lastUpdated
+    );
 
   async function loadWeather() {
-    setRefreshing(true);
+  setRefreshing(true);
 
-    try {
-      const data = await getWeather();
-      setWeather(data);
-      setLastUpdated(new Date());
-      setError("");
-    } catch (err) {
-      setError("Weather data is unavailable. Please try again.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  try {
+    await dispatch(fetchWeather()).unwrap();
+  } catch (err) {
+    console.error("Weather fetch failed:", err);
+  } finally {
+    setRefreshing(false);
   }
-
+}
      useEffect(() => {
   loadWeather();
 
@@ -45,8 +62,9 @@ export default function Dashboard() {
   return () => {
     clearInterval(intervalId);
   };
-}, []);
+   }, []);
   
+
   const current = weather?.current;
   const daily = weather?.daily;
    
@@ -73,6 +91,7 @@ export default function Dashboard() {
   }
    
   return (
+    
     <div className="dashboard">
       <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
         <div>
@@ -81,10 +100,13 @@ export default function Dashboard() {
             Monitor live weather and crop conditions.
           </p>
         </div>
-
+           
         <span className="badge text-bg-success p-2">
           Farm Status: Active
         </span>
+         
+          
+          
       </div>
 
       <button
@@ -97,11 +119,11 @@ export default function Dashboard() {
          {lastUpdated && (
          <p className="text-muted small mb-4">
           Last updated:{" "}
-          {lastUpdated.toLocaleTimeString("en-PK", {
-           hour: "2-digit",
+          {new Date(lastUpdated).toLocaleTimeString("en-PK", {
+            hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
-         })}
+        })}
         
   </p>
      
@@ -205,15 +227,114 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
+              
         </div>
-         
+        
+          
       )}
-       <AlertsPanel humidity={current?.relative_humidity_2m}/>
+       
+       
+
+      <div className="row g-3 mb-4">
+  <div className="col-12 col-md-6 col-xl-3">
+    <StatCard
+      title="Total Crops"
+      value={crops.length}
+      icon="🌱"
+    />
+  </div>
+
+  <div className="col-12 col-md-6 col-xl-3">
+    <StatCard
+      title="Total Buyers"
+      value={buyers.length}
+      icon="👥"
+    />
+  </div>
+
+     <div className="col-12 col-md-6 col-xl-3">
+     <StatCard
+      title="Total Orders"
+      value={orders.length}
+      icon="📦"
+    />
+      </div>
+
+   <div className="col-12 col-md-6 col-xl-3">
+    <StatCard
+      title="Total Harvested"
+      value={`${crops.reduce(
+        (total, crop) =>
+          total + (Number(crop.harvestQty) || 0),
+        0
+      )} kg`}
+      icon="🌾"
+    />
+     </div>
+    </div>
+
+             <div className="row">
+  {crops.map((crop) => (
+    <div className="col-md-4 mb-3" key={crop.id}>
+      <div className="card p-3">
+        <h5>{crop.name}</h5>
+
+        <p>
+          Profit: Rs.{" "}
+          {useSelector
+            ? selectProfitByCrop(
+                { orders: [], expenses: [] },
+                crop.id
+              )
+            : 0}
+        </p>
+      </div>
+    </div>
+    ))}
+       </div>
+           
+                   <div className="card p-3 mt-3">
+         <h5>Crops Due for Harvest</h5>
+
+            {dueCrops.length === 0 ? (
+           <p>No crops are due for harvest.</p>
+             ) : (
+            <ul>
+           {dueCrops.map((crop) => (
+        <li key={crop.id}>
+          {crop.name} — {crop.cuttingDate || crop.harvestDate}
+        </li>
+      ))}
+    </ul>
+        )}
+     </div>
+
+       
        <CuttingSchedule/>
         <HarvestSummary/>
         <CropHealthList/>
         <CropHealthChart/>
         <HarvestChart/>
+              <div className="card p-3 mt-3">
+     <h5>Low Stock Crops</h5>
+
+     {lowStockCrops.length === 0 ? (
+    <p>All crops have sufficient stock.</p>
+     ) : (
+      <ul>
+      {lowStockCrops.map((crop) => (
+        <li key={crop.id}>
+          {crop.name || "Unnamed Crop"} — Stock:{" "}
+          {crop.quantity ?? crop.stock ?? 0}
+        </li>
+      ))}
+    </ul>
+     )}
+    </div>
+
+
+        <AlertsPanel humidity={current?.relative_humidity_2m}/>
+
               {current && daily && (
   <CropRecommendations
     temperature={current.temperature_2m}

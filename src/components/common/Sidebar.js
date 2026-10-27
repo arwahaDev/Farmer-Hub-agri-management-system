@@ -1,10 +1,16 @@
 import { NavLink } from "react-router-dom";
 
+
 const menuItems = [
   { title: "Dashboard", path: "/", icon: "▦" },
   { title: "Crops", path: "/crops", icon: "🌱" },
   { title: "Harvest & Orders", path: "/harvest-orders", icon: "📦" },
   { title: "Buyers", path: "/buyers", icon: "👥" },
+
+  { title: "Tasks", path: "/tasks", icon: "📋" },
+  { title: "Expenses", path: "/expenses", icon: "💰" },
+  { title: "Inventory", path: "/Inventory", icon: "📦" },
+  { title: "Reports", path: "/reports", icon: "📊" },
 ];
 
 export default function Sidebar() {
@@ -33,6 +39,7 @@ export default function Sidebar() {
             <span className="menu-icon">{item.icon}</span>
             <span>{item.title}</span>
           </NavLink>
+           
         ))}
       </nav>
 

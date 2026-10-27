@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
+
 export default function AlertsPanel({ humidity }) {
   const [crops, setCrops] = useState([]);
   const [buyers, setBuyers] = useState([]);
+  
 
   useEffect(() => {
     function loadData() {

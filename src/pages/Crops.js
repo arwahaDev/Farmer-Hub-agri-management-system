@@ -1,5 +1,5 @@
 import { exportCsv } from "../utils/exportCsv";
-import StockProgressBar from "../components/StockProgressBar";
+import StockProgressBar from "../components/harvest/StockProgressBar";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
@@ -413,6 +413,7 @@ useEffect(() => {
           </table>
         </div>
       </div>
+     
     </div>
   );
 }
